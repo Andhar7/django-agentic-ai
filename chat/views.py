@@ -1,7 +1,10 @@
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
+
+from agents.llm_service import LLMService
 
 from .forms import MessageForm
 from .models import Conversation
@@ -34,10 +37,14 @@ def send_message(request):
             role="user",
             content=form.cleaned_data["content"],
         )
+
+        llm = LLMService(model=settings.OLLAMA_MODEL, host=settings.OLLAMA_BASE_URL)
+        reply_text = llm.generate(form.cleaned_data["content"])
+
         assistant_message = conversation.messages.create(
             role="assistant",
-            content=f"Echo: {form.cleaned_data['content']}",
-            route="echo",
+            content=reply_text,
+            route="llm",
         )
 
         return render(
