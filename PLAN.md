@@ -268,4 +268,53 @@ No-water, hands-on, one day builds directly on the last. Each day ends with some
 
 ---
 
+## 11. Verification cheat-sheet — checking real Postgres state
+
+Always run these from the project directory. The `export PATH=...` line puts Homebrew's `psql` (17) ahead of any other `psql` on your system — needed once per terminal session (skip it if `psql` already works without it).
+
+```bash
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+```
+
+**Connect to the project database (interactive shell):**
+```bash
+psql -d django_agentic_ai
+```
+Once inside, `\q` quits. Everything below also works as a one-off `psql -d django_agentic_ai -c "..."` without entering the interactive shell.
+
+**List all tables** (confirms a migration actually created something):
+```bash
+psql -d django_agentic_ai -c "\dt"
+```
+
+**Show one table's columns, types, indexes, and foreign keys** (confirms a model's fields match what's really in the database):
+```bash
+psql -d django_agentic_ai -c "\d chat_conversation"
+psql -d django_agentic_ai -c "\d chat_message"
+```
+
+**See actual rows** — swap the table/columns for whatever you're checking:
+```bash
+psql -d django_agentic_ai -c "SELECT id, username, email, is_staff, is_superuser FROM auth_user ORDER BY id;"
+psql -d django_agentic_ai -c "SELECT id, user_id, created_at FROM chat_conversation ORDER BY created_at;"
+psql -d django_agentic_ai -c "SELECT id, conversation_id, role, route, content, created_at FROM chat_message ORDER BY created_at;"
+```
+
+**Count rows** (quick sanity check without printing everything):
+```bash
+psql -d django_agentic_ai -c "SELECT count(*) FROM chat_message;"
+```
+
+**Check which migrations Django has actually applied** (matches migration *files* against what's really been run against this database — useful if `makemigrations` and `migrate` ever seem out of sync):
+```bash
+uv run manage.py showmigrations chat
+```
+
+**Live session table** (same one auth uses — confirms a login really created a session row):
+```bash
+psql -d django_agentic_ai -c "SELECT session_key, expire_date FROM django_session ORDER BY expire_date DESC LIMIT 5;"
+```
+
+---
+
 *Next step: Day 1, whenever you're ready. Just say "let's start Day 1" in a new session and I'll read this file and pick up exactly here.*

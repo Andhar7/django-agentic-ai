@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Chat{% endblock %}
+
+{% block content %}
+    <h1>Chat</h1>
+
+    <div class="messages">
+        {% for message in chat_messages %}
+            <p><strong>{{ message.role }}:</strong> {{ message.content }}</p>
+        {% empty %}
+            <p>No messages yet — say hello.</p>
+        {% endfor %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Send</button>
+    </form>
+{% endblock %}
