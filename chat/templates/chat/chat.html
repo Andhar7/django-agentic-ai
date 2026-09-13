@@ -5,7 +5,7 @@
 {% block content %}
     <h1>Chat</h1>
 
-    <div class="messages">
+    <div id="chat-messages" class="messages">
         {% for message in chat_messages %}
             <p><strong>{{ message.role }}:</strong> {{ message.content }}</p>
         {% empty %}
@@ -13,7 +13,8 @@
         {% endfor %}
     </div>
 
-    <form method="post">
+    <form hx-post="{% url 'chat_send' %}" hx-target="#chat-messages" hx-swap="beforeend"
+          hx-on::after-request="this.reset()">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Send</button>
