@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 
 from agents.llm_service import LLMService
+from agents.supervisor import SupervisorAgent
 
 from .forms import MessageForm
 from .models import Conversation
@@ -37,14 +38,19 @@ def send_message(request):
             role="user",
             content=form.cleaned_data["content"],
         )
-
         llm = LLMService(model=settings.OLLAMA_MODEL, host=settings.OLLAMA_BASE_URL)
-        reply_text = llm.generate(form.cleaned_data["content"])
+        supervisor = SupervisorAgent(llm_service=llm)
+        route = supervisor.decide_route(form.cleaned_data["content"])
+
+        if route == "greeting":
+            reply_text = "Hello! How can I help you today?"
+        else:
+            reply_text = llm.generate(form.cleaned_data["content"])
 
         assistant_message = conversation.messages.create(
             role="assistant",
             content=reply_text,
-            route="llm",
+            route=route,
         )
 
         return render(
